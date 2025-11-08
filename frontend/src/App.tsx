@@ -1,14 +1,19 @@
-import { useState } from 'react';
-import { Battery, Camera } from 'lucide-react';
-import CoreFunctions from './components/CoreFunctions';
-import VoiceControl from './components/VoiceControl';
-import FaceDetection from './components/FaceDetection';
-import Benefits from './components/Benefits';
+import { useState } from "react";
+import { Battery, Camera } from "lucide-react";
+import CoreFunctions from "./components/CoreFunctions";
+import VoiceControl from "./components/VoiceControl";
+import FaceDetection from "./components/FaceDetection";
+import Benefits from "./components/Benefits";
 
-type View = 'main' | 'face-detection' | 'object-recognition' | 'text-reading' | 'navigation';
+type View =
+  | "main"
+  | "face-detection"
+  | "object-recognition"
+  | "text-reading"
+  | "navigation";
 
 function App() {
-  const [currentView, setCurrentView] = useState<View>('main');
+  const [currentView, setCurrentView] = useState<View>("main");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -21,19 +26,21 @@ function App() {
             <h1 className="text-xl font-semibold text-gray-900">Echo Vision</h1>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">Active</span>
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full">
+              Active
+            </span>
             <Battery className="w-5 h-5 text-gray-600" />
           </div>
         </header>
 
-        {currentView === 'main' ? (
+        {currentView === "main" ? (
           <>
             <CoreFunctions onNavigate={setCurrentView} />
-            <VoiceControl />
+            <VoiceControl onNavigate={setCurrentView} />
             <Benefits />
           </>
-        ) : currentView === 'face-detection' ? (
-          <FaceDetection onBack={() => setCurrentView('main')} />
+        ) : currentView === "face-detection" ? (
+          <FaceDetection onBack={() => setCurrentView("main")} />
         ) : null}
       </div>
     </div>

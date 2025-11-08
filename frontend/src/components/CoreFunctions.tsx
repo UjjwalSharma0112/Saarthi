@@ -1,20 +1,28 @@
-import { ChevronRight, Users, Search, FileText, Navigation } from 'lucide-react';
+import {
+  ChevronRight,
+  Users,
+  Search,
+  FileText,
+  Navigation,
+} from "lucide-react";
 
 interface CoreFunctionsProps {
-  onNavigate: (view: string) => void;
+  onNavigate: (view: any) => void;
 }
 
 const functions = [
-  { id: 'face-detection', label: 'Face Detection', icon: Users },
-  { id: 'object-recognition', label: 'Object Recognition', icon: Search },
-  { id: 'text-reading', label: 'Text Reading', icon: FileText },
-  { id: 'navigation', label: 'Navigation Assist', icon: Navigation },
+  { id: "face-detection", label: "Face Detection", icon: Users },
+  { id: "object-recognition", label: "Object Recognition", icon: Search },
+  { id: "text-reading", label: "Text Reading", icon: FileText },
+  { id: "navigation", label: "Navigation Assist", icon: Navigation },
 ];
 
 export default function CoreFunctions({ onNavigate }: CoreFunctionsProps) {
   return (
     <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Core Functions</h2>
+      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+        Core Functions
+      </h2>
       <div className="space-y-1">
         {functions.map((func) => {
           const Icon = func.icon;

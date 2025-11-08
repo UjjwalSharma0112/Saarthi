@@ -28,6 +28,53 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Auto-activate camera on mount
+  useEffect(() => {
+    const activateCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setIsActive(true);
+        setRecognitionResult("Camera active, scanning...");
+      } catch (err) {
+        setRecognitionResult("Error: Camera access denied");
+      }
+    };
+
+    activateCamera();
+
+    // Cleanup on unmount
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Periodic frame capture for recognition
+  useEffect(() => {
+    if (isActive && videoRef.current && canvasRef.current) {
+      intervalRef.current = setInterval(() => {
+        captureFrameForRecognition();
+      }, 1500);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isActive]);
   // Periodic frame capture for recognition
   useEffect(() => {
     if (isActive && videoRef.current && canvasRef.current) {
