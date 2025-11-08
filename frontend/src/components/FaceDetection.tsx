@@ -119,6 +119,7 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
   };
 
   const performSpeech = (text: string) => {
+    if (!text.includes("Unknown")) text = "Hello Mr." + text;
     speak(text);
   };
 
@@ -137,7 +138,7 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
     const dataURL = canvas.toDataURL("image/jpeg");
 
     try {
-      const response = await fetch("/recognize", {
+      const response = await fetch("http://127.0.0.1:3000/recognize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: dataURL }),
@@ -216,7 +217,7 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
     const dataURL = canvas.toDataURL("image/jpeg");
 
     try {
-      const response = await fetch("/capture", {
+      const response = await fetch("http://127.0.0.1:3000/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: dataURL, name: personName }),
