@@ -6,7 +6,10 @@ import {
   Play,
   Square,
   UserPlus,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import speak from "../utils/speak";
 
 interface FaceDetectionProps {
   onBack: () => void;
@@ -24,9 +27,15 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
   const [knownFacesCount, setKnownFacesCount] = useState(0);
   const [personName, setPersonName] = useState("");
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track last spoken name to prevent repetition
+  const lastSpokenNameRef = useRef<string>("");
+  const unknownDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-activate camera on mount
   useEffect(() => {
@@ -57,6 +66,10 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (unknownDebounceTimerRef.current) {
+        clearTimeout(unknownDebounceTimerRef.current);
+        unknownDebounceTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -75,21 +88,39 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
       }
     };
   }, [isActive]);
-  // Periodic frame capture for recognition
-  useEffect(() => {
-    if (isActive && videoRef.current && canvasRef.current) {
-      intervalRef.current = setInterval(() => {
-        captureFrameForRecognition();
-      }, 1500);
+
+  const speakName = (name: string) => {
+    if (!isSpeechEnabled) return;
+
+    const normalizedName = name.toLowerCase().trim();
+
+    // Check if this is the same person as last time
+    if (normalizedName === lastSpokenNameRef.current.toLowerCase()) {
+      return; // Don't speak if it's the same person
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isActive]);
+    // Clear any pending unknown debounce
+    if (unknownDebounceTimerRef.current) {
+      clearTimeout(unknownDebounceTimerRef.current);
+      unknownDebounceTimerRef.current = null;
+    }
+
+    // For "Unknown", add a debounce delay
+    if (normalizedName === "unknown") {
+      unknownDebounceTimerRef.current = setTimeout(() => {
+        performSpeech(name);
+        lastSpokenNameRef.current = name;
+      }, 2000); // 2 second debounce for unknown
+    } else {
+      // For known faces, speak immediately
+      performSpeech(name);
+      lastSpokenNameRef.current = name;
+    }
+  };
+
+  const performSpeech = (text: string) => {
+    speak(text);
+  };
 
   const captureFrameForRecognition = async () => {
     const video = videoRef.current;
@@ -113,9 +144,14 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
       });
 
       const data: RecognitionResult = await response.json();
-      setRecognitionResult(
-        `${data.result}${data.confidence ? ` (${data.confidence})` : ""}`
-      );
+      const resultText = `${data.result}${
+        data.confidence ? ` (${data.confidence})` : ""
+      }`;
+
+      setRecognitionResult(resultText);
+
+      // Speak only the person's name with debouncing
+      speakName(data.result);
     } catch (err) {
       console.error("Recognition failed:", err);
       setRecognitionResult("Server error - Make sure backend is running");
@@ -133,6 +169,8 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
         }
         setIsActive(true);
         setRecognitionResult("Camera active, scanning...");
+        // Reset last spoken name when camera is activated
+        lastSpokenNameRef.current = "";
       } catch (err) {
         setRecognitionResult("Error: Camera access denied");
       }
@@ -146,8 +184,13 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (unknownDebounceTimerRef.current) {
+        clearTimeout(unknownDebounceTimerRef.current);
+        unknownDebounceTimerRef.current = null;
+      }
       setIsActive(false);
       setRecognitionResult("Waiting...");
+      lastSpokenNameRef.current = "";
     }
   };
 
@@ -190,20 +233,49 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
     }
   };
 
+  const toggleSpeech = () => {
+    setIsSpeechEnabled(!isSpeechEnabled);
+    if (isSpeechEnabled) {
+      // If turning off, clear any pending debounce
+      if (unknownDebounceTimerRef.current) {
+        clearTimeout(unknownDebounceTimerRef.current);
+        unknownDebounceTimerRef.current = null;
+      }
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Face Recognition
+          </h2>
+        </div>
+
         <button
-          onClick={onBack}
-          className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors"
+          onClick={toggleSpeech}
+          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            isSpeechEnabled
+              ? "bg-blue-100 hover:bg-blue-200 active:bg-blue-300"
+              : "bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+          }`}
+          title={isSpeechEnabled ? "Disable speech" : "Enable speech"}
         >
-          <ChevronLeft className="w-5 h-5 text-gray-700" />
+          {isSpeechEnabled ? (
+            <Volume2 className="w-4 h-4 text-blue-600" />
+          ) : (
+            <VolumeX className="w-4 h-4 text-gray-600" />
+          )}
         </button>
-        <h2 className="text-lg font-semibold text-gray-900">
-          Face Recognition
-        </h2>
       </div>
 
       <div className="p-6 space-y-4">
@@ -269,8 +341,14 @@ export default function FaceDetection({ onBack }: FaceDetectionProps) {
           </div>
 
           <div className="bg-white rounded-lg px-4 py-3 mb-4">
-            <div className="text-sm text-gray-500 mb-1">
-              Recognition Result:
+            <div className="text-sm text-gray-500 mb-1 flex items-center justify-between">
+              <span>Recognition Result:</span>
+              {isSpeechEnabled && (
+                <span className="text-xs text-blue-600 flex items-center gap-1">
+                  <Volume2 className="w-3 h-3" />
+                  Speech enabled
+                </span>
+              )}
             </div>
             <div className="text-lg font-semibold text-gray-900">
               {recognitionResult}
