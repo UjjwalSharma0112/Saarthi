@@ -203,33 +203,6 @@ export default function VoiceAssistant({ onNavigate }: VoiceControlProps) {
             )}
           </div>
         </div>
-
-        {currentCommand && (
-          <div className="bg-white rounded-3xl shadow-sm p-6 mb-4">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Current Command
-            </h3>
-            <p className="text-gray-900">{currentCommand}</p>
-          </div>
-        )}
-
-        {commandHistory.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Command History
-            </h3>
-            <div className="space-y-2">
-              {commandHistory.map((cmd, idx) => (
-                <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-700">
-                    <span className="text-gray-400 mr-2">#{idx + 1}</span>
-                    {cmd}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

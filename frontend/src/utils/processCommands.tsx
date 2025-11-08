@@ -1,5 +1,5 @@
 import nlp from "compromise";
-
+import speak from "./speak";
 export type View =
   | "main"
   | "face-detection"
@@ -11,6 +11,10 @@ interface ProcessCommandsProps {
   transcript: string;
   onNavigate: React.Dispatch<React.SetStateAction<View>>;
 }
+
+/**
+ * Improved TTS speak function
+ */
 
 /**
  * Processes voice transcript using NLP and navigates to the appropriate view.
@@ -25,12 +29,6 @@ export default function processCommand({
   const doc = nlp(command);
   const tokens = doc.terms().out("array");
   console.log("🧠 NLP tokens:", tokens);
-
-  const speak = (msg: string) => {
-    const utterance = new SpeechSynthesisUtterance(msg);
-    utterance.lang = "en-US";
-    window.speechSynthesis.speak(utterance);
-  };
 
   // === 🎯 FACE DETECTION ===
   if (
